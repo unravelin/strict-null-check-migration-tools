@@ -2,6 +2,20 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as ts from 'typescript'
 
+function isStrangeExternalImport(fileName: string): boolean {
+  return (
+    fileName.includes("@sentry") ||
+    fileName.includes("@testing-library") ||
+    fileName.includes("@mindspace-io") ||
+    fileName.includes("@hookform") ||
+    fileName.includes("@tippyjs") ||
+    fileName.includes("@popperjs") ||
+    fileName.includes("rfdc/default") ||
+    fileName.includes("highlight.js/lib") ||
+    fileName.includes("react-select/")
+  );
+}
+
 /**
  * Given a file, return the list of files it imports as absolute paths.
  */
@@ -26,12 +40,18 @@ export function getImportsForFile(file: string, srcRoot: string) {
     .map(importedFile => importedFile.fileName)
     // remove svg, css imports
     .filter(fileName => !fileName.endsWith(".css") && !fileName.endsWith(".svg") && !fileName.endsWith(".json"))
+    .filter(fileName => !isStrangeExternalImport(fileName))
     .filter(fileName => !fileName.endsWith(".js") && !fileName.endsWith(".jsx")) // Assume .js/.jsx imports have a .d.ts available
     .filter(x => /\//.test(x)) // remove node modules (the import must contain '/')
     .map(fileName => {
       if (/(^\.\/)|(^\.\.\/)/.test(fileName)) {
         return path.join(path.dirname(file), fileName)
       }
+
+      if (fileName.startsWith("@shared")) {
+        return path.join(srcRoot, fileName.replace("@shared", "packages/shared/scripts"));
+      }
+
       return path.join(srcRoot, fileName);
     }).map(fileName => {
       if (fs.existsSync(`${fileName}.ts`)) {
