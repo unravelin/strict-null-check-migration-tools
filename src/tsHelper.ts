@@ -16,7 +16,8 @@ export function getImportsForFile(file: string, srcRoot: string) {
       console.warn(`Warning: Barrel import: ${path.relative(srcRoot, file)}`)
       file = index
     } else {
-      throw new Error(`Warning: Importing a directory without an index.ts file: ${path.relative(srcRoot, file)}`)
+      console.warn(`Warning: Importing a directory without an index.ts file: ${path.relative(srcRoot, file)}`)
+      return [];
     }
   }
 
